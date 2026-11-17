@@ -7,7 +7,7 @@ from django.db import models
 
 
 class User(AbstractUser):
-    """Extend Django's user with a news role and reader subscriptions."""
+    """Store a news role and the publishers and journalists a reader follows."""
 
     class Role(models.TextChoices):
         """Canonical role values used by groups, forms and API checks."""
@@ -54,7 +54,7 @@ class User(AbstractUser):
 
 
 class Publisher(models.Model):
-    """A news organisation with editors and journalists."""
+    """Represent a news organisation and its roster of editors and journalists."""
 
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True)
@@ -151,7 +151,7 @@ class Article(models.Model):
 
 
 class Newsletter(models.Model):
-    """A curated collection of articles."""
+    """Group articles into a curated edition that may belong to a publisher."""
 
     title = models.CharField(max_length=250)
     description = models.TextField(blank=True)
@@ -227,7 +227,7 @@ class Newsletter(models.Model):
 
 
 class ApprovalLog(models.Model):
-    """Record approved articles received by our internal API."""
+    """Record an article approval event received by the internal API."""
 
     # One record per article makes repeated API requests harmless.
     article = models.OneToOneField(
