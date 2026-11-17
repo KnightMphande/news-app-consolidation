@@ -153,7 +153,17 @@ def api_subscribed_articles(request):
 
 @api_view(["GET", "PUT", "DELETE"])
 def api_article_detail(request, pk):
-    """Retrieve published content, update an article, or delete it."""
+    """Retrieve a published article, update an article, or delete it.
+
+    GET only returns approved articles and requires view permission.
+    PUT and DELETE can also act on drafts if the caller passes the
+    article management checks. PUT sends the article back for review
+    by clearing its approval; DELETE returns HTTP 204.
+
+    :param request: The API request.
+    :param pk: The article's primary key.
+    :return: Serialized article data or an empty deletion response.
+    """
     if request.method == "GET":
         article = get_object_or_404(
             approved_api_articles(request.user),
@@ -188,7 +198,16 @@ def api_article_detail(request, pk):
 
 
 def check_article_management(user, article, action):
-    """Require the action permission and editor or author access."""
+    """Require both the requested permission and access to this article.
+
+    The user must have the action permission and either hold the article
+    approval permission or be the journalist who authored the article.
+
+    :param user: The account attempting the action.
+    :param article: The article being managed.
+    :param action: The permission action, such as ``change`` or ``delete``.
+    :raises PermissionDenied: If either access requirement is not met.
+    """
     if not user.has_perm(f"news.{action}_article"):
         raise PermissionDenied
 
@@ -205,7 +224,17 @@ def check_article_management(user, article, action):
 
 @api_view(["POST"])
 def api_article_approve(request, pk):
-    """Allow editors to approve articles and trigger notifications."""
+    """Approve an article and notify subscribers on a new approval.
+
+    Require article approval permission. If the article changes from
+    unapproved to approved, send notifications and collect any delivery
+    warnings. Repeating approval on an already approved article does
+    not send notifications again.
+
+    :param request: The API request.
+    :param pk: The article's primary key.
+    :return: The serialized article, a new-approval flag and delivery warnings.
+    """
     if not request.user.has_perm("news.approve_article"):
         raise PermissionDenied("Only editors can approve articles.")
 
