@@ -1,0 +1,22 @@
+{% extends "news/base.html" %}
+{% block title %}Create account · Newsroom{% endblock %}
+{% block content %}
+<div class="card login-card">
+    <h1>Create your news account</h1>
+    <p>Choose Reader to follow news, Journalist to write stories, or Editor to review stories and manage publications.</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}<span class="muted">{{ field.help_text|safe }}</span>{% endif %}
+                {{ field.errors }}
+            </p>
+        {% endfor %}
+        <button type="submit">Create account</button>
+    </form>
+    <p>Already registered? <a href="{% url 'login' %}">Log in</a>.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "news/base.html" %}
+
+{% block title %}Delete article · Newsroom{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Delete article?</h1>
+
+    <p>
+        You are about to delete
+        <strong>{{ article.title }}</strong>.
+    </p>
+
+    <p>This cannot be undone.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Yes, delete article</button>
+    </form>
+
+    <p>
+        <a href="{% url 'news:article-detail' article.pk %}">
+            Cancel and return to article
+        </a>
+    </p>
+</div>
+{% endblock %}

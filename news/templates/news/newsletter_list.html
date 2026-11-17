@@ -1,0 +1,38 @@
+{% extends "news/base.html" %}
+
+{% block title %}Newsletters · Newsroom{% endblock %}
+
+{% block content %}
+<h1>Newsletters</h1>
+<p class="muted">Collections of published stories curated by our newsroom.</p>
+
+{% if user.role == "journalist" and perms.news.add_newsletter %}
+    <p>
+        <a href="{% url 'news:newsletter-create' %}">
+            Create newsletter
+        </a>
+    </p>
+{% endif %}
+
+{% for newsletter in newsletters %}
+    <article class="card">
+        <h2>
+            <a href="{% url 'news:newsletter-detail' newsletter.pk %}">
+                {{ newsletter.title }}
+            </a>
+        </h2>
+
+        <p class="muted">
+            By {{ newsletter.author.username }}
+            · {{ newsletter.created_at|date:"j M Y" }}
+            · {{ newsletter.publisher|default:"Independent newsletter" }}
+        </p>
+
+        <p>{{ newsletter.description|truncatewords:35 }}</p>
+    </article>
+{% empty %}
+    <div class="card">
+        <p>No newsletters have been created yet.</p>
+    </div>
+{% endfor %}
+{% endblock %}

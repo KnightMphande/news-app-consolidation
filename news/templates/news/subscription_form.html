@@ -1,0 +1,37 @@
+{% extends "news/base.html" %}
+
+{% block title %}My subscriptions · Newsroom{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>My subscriptions</h1>
+
+    <p class="muted">
+        Follow publishers and journalists to receive notifications
+        when their articles are approved.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <fieldset>
+            <legend>Publishers</legend>
+            {{ form.subscribed_publishers.errors }}
+            {{ form.subscribed_publishers }}
+        </fieldset>
+
+        <fieldset>
+            <legend>Journalists</legend>
+            {{ form.subscribed_journalists.errors }}
+            {{ form.subscribed_journalists }}
+        </fieldset>
+
+        <p class="muted">
+            Clear all selections to unsubscribe from everyone.
+        </p>
+
+        <button type="submit">Save subscriptions</button>
+    </form>
+</div>
+{% endblock %}

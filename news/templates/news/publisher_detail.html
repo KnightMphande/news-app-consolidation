@@ -1,0 +1,21 @@
+{% extends "news/base.html" %}
+{% block title %}{{ publisher.name }} · Newsroom{% endblock %}
+{% block content %}
+<div class="card">
+    <h1>{{ publisher.name }}</h1>
+    <p>{{ publisher.description }}</p>
+    {% if can_manage %}<p><a href="{% url 'news:publisher-edit' publisher.pk %}">Manage publisher</a></p>{% endif %}
+    {% if user.role == "reader" %}<p><a href="{% url 'news:subscription-manage' %}">Manage your subscriptions</a></p>{% endif %}
+    <h2>Editors</h2>
+    <ul>{% for member in publisher.editors.all %}<li>{{ member.username }}</li>{% empty %}<li>No editors assigned.</li>{% endfor %}</ul>
+    <h2>Journalists</h2>
+    <ul>{% for member in publisher.journalists.all %}<li>{{ member.username }}</li>{% empty %}<li>No journalists assigned.</li>{% endfor %}</ul>
+</div>
+<h2>Articles</h2>
+{% for article in articles %}
+    <article class="card">
+        <h3><a href="{% url 'news:article-detail' article.pk %}">{{ article.title }}</a></h3>
+        <p>{% if article.approved %}Published{% else %}Awaiting approval{% endif %} · {{ article.author.username }}</p>
+    </article>
+{% empty %}<p class="card">No articles available to your account for this publication yet.</p>{% endfor %}
+{% endblock %}

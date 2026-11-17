@@ -1,0 +1,20 @@
+{% extends "news/base.html" %}
+{% block title %}Publishers · Newsroom{% endblock %}
+{% block content %}
+<h1>Publishers</h1>
+<p>Explore publications and their newsroom members.</p>
+{% if user.role == "editor" %}
+    <p><a href="{% url 'news:publisher-create' %}">Create publisher</a></p>
+{% endif %}
+{% for publisher in publishers %}
+    <article class="card">
+        <h2><a href="{% url 'news:publisher-detail' publisher.pk %}">{{ publisher.name }}</a></h2>
+        <p>{{ publisher.description|default:"No description yet." }}</p>
+        {% if user.role == "editor" and publisher.pk in managed_ids %}
+            <a href="{% url 'news:publisher-edit' publisher.pk %}">Manage publisher</a>
+        {% endif %}
+    </article>
+{% empty %}
+    <p class="card">No publications yet. Editors can create a publisher here. Journalists can also write independently.</p>
+{% endfor %}
+{% endblock %}

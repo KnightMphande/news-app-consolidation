@@ -1,0 +1,20 @@
+{% extends "news/base.html" %}
+
+{% block title %}Create newsletter · Newsroom{% endblock %}
+
+{% block content %}
+<p>
+    <a href="{% url 'news:newsletter-list' %}">← Back to newsletters</a>
+</p>
+
+<div class="card">
+    <h1>Create newsletter</h1>
+    <p class="muted">Select at least one approved article to include.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Create newsletter</button>
+    </form>
+</div>
+{% endblock %}

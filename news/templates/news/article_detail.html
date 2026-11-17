@@ -1,0 +1,59 @@
+{% extends "news/base.html" %}
+
+{% block title %}{{ article.title }} · Newsroom{% endblock %}
+
+{% block content %}
+<p>
+    <a href="{% url 'news:article-list' %}">← Back to articles</a>
+</p>
+
+<article class="card">
+    <span class="badge">
+        {% if article.approved %}
+            Published
+        {% else %}
+            Awaiting approval
+        {% endif %}
+    </span>
+
+    <h1>{{ article.title }}</h1>
+
+    <p class="muted">
+        By {{ article.author.username }}
+        · {{ article.created_at|date:"j M Y, H:i" }}
+        · {{ article.publisher|default:"Independent journalist" }}
+    </p>
+
+    {% if perms.news.change_article %}
+        {% if perms.news.approve_article or article.author_id == user.pk %}
+            <p>
+                <a href="{% url 'news:article-edit' article.pk %}">
+                    Edit article
+                </a>
+            </p>
+        {% endif %}
+    {% endif %}
+
+        {% if perms.news.delete_article %}
+        {% if perms.news.approve_article or article.author_id == user.pk %}
+            <p>
+                <a href="{% url 'news:article-delete' article.pk %}">
+                    Delete article
+                </a>
+            </p>
+        {% endif %}
+    {% endif %}
+    
+    {% if perms.news.approve_article and not article.approved %}
+        <form
+            method="post"
+            action="{% url 'news:article-approve' article.pk %}"
+        >
+            {% csrf_token %}
+            <button type="submit">Approve and publish</button>
+        </form>
+    {% endif %}
+
+    <div>{{ article.content|linebreaks }}</div>
+</article>
+{% endblock %}

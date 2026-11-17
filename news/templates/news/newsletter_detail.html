@@ -1,0 +1,53 @@
+{% extends "news/base.html" %}
+
+{% block title %}{{ newsletter.title }} · Newsroom{% endblock %}
+
+{% block content %}
+<p>
+    <a href="{% url 'news:newsletter-list' %}">← Back to newsletters</a>
+</p>
+
+<div class="card">
+    <h1>{{ newsletter.title }}</h1>
+
+    <p class="muted">
+        Curated by {{ newsletter.author.username }}
+        · {{ newsletter.publisher|default:"Independent newsletter" }}
+    </p>
+
+    {{ newsletter.description|linebreaks }}
+    {% if perms.news.approve_article or newsletter.author_id == user.pk %}
+        {% if perms.news.change_newsletter %}
+            <p>
+                <a href="{% url 'news:newsletter-edit' newsletter.pk %}">
+                    Edit newsletter
+                </a>
+            </p>
+        {% endif %}
+
+        {% if perms.news.delete_newsletter %}
+            <p>
+                <a href="{% url 'news:newsletter-delete' newsletter.pk %}">
+                    Delete newsletter
+                </a>
+            </p>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% for article in articles %}
+    <article class="card">
+        <h2>
+            <a href="{% url 'news:article-detail' article.pk %}">
+                {{ article.title }}
+            </a>
+        </h2>
+        <p class="muted">By {{ article.author.username }}</p>
+        <p>{{ article.content|truncatewords:40 }}</p>
+    </article>
+{% empty %}
+    <div class="card">
+        <p>This newsletter currently has no published articles available.</p>
+    </div>
+{% endfor %}
+{% endblock %}

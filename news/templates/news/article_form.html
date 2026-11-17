@@ -1,0 +1,20 @@
+{% extends "news/base.html" %}
+
+{% block title %}{{ heading }} · Newsroom{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'news:article-list' %}">← Back to articles</a></p>
+
+<div class="card">
+    <h1>{{ heading }}</h1>
+    <p class="muted">
+        New and edited articles require editor approval before publication.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save article</button>
+    </form>
+</div>
+{% endblock %}

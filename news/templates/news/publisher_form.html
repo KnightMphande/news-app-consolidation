@@ -1,0 +1,22 @@
+{% extends "news/base.html" %}
+{% block title %}{{ heading }} · Newsroom{% endblock %}
+{% block content %}
+<div class="card">
+    <h1>{{ heading }}</h1>
+    <p>Assign registered editors and journalists to this publication. Your editor membership is retained when you save.</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <div>
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+        <button type="submit">Save publisher</button>
+    </form>
+    <p><a href="{% url 'news:publisher-list' %}">Back to publishers</a></p>
+</div>
+{% endblock %}

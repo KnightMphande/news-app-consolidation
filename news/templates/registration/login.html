@@ -1,0 +1,32 @@
+{% extends "news/base.html" %}
+
+{% block title %}Log in · Newsroom{% endblock %}
+
+{% block content %}
+<div class="card login-card">
+    <h1>Welcome to Newsroom</h1>
+    <p class="muted">Sign in to access your news account.</p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.non_field_errors }}
+
+        <p>
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+        </p>
+
+        <p>
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {{ form.password.errors }}
+        </p>
+
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit">Log in</button>
+    </form>
+    <p>New to Newsroom? <a href="{% url 'register' %}">Create an account</a>.</p>
+</div>
+{% endblock %}
