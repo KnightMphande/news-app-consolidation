@@ -23,7 +23,16 @@ from .notifications import notify_article_approval
 
 
 def visible_articles(user):
-    """Return the articles this user is allowed to read."""
+    """Return the articles the user has permission to read.
+
+    After the view permission check, superusers and users with approval
+    permission can see all articles. Journalists can see approved articles
+    and their own drafts. Other users can see approved articles only.
+
+    :param user: The account requesting article access.
+    :return: A queryset with authors and publishers selected.
+    :raises PermissionDenied: If the user lacks article view permission.
+    """
     if not user.has_perm("news.view_article"):
         raise PermissionDenied
 
@@ -72,7 +81,16 @@ def article_detail(request, pk):
 @permission_required("news.approve_article", raise_exception=True)
 @require_POST
 def approve_article(request, pk):
-    """Approve an article and trigger its publication notifications."""
+    """Approve an article through a POST and redirect to its detail page.
+
+    Send notifications only when the article changes from unapproved to
+    approved. Show any delivery warnings to the editor without undoing
+    the approval.
+
+    :param request: The browser request.
+    :param pk: The article's primary key.
+    :return: A redirect to the article detail page.
+    """
     article = get_object_or_404(Article, pk=pk)
 
     # A conditional update prevents repeated approval clicks from
@@ -133,7 +151,17 @@ def article_create(request):
 @login_required
 @permission_required("news.change_article", raise_exception=True)
 def article_edit(request, pk):
-    """Allow editors or an article's journalist author to edit it."""
+    """Display the edit form or process an article update.
+
+    The caller must have approval permission or be the journalist who
+    wrote the article. A valid submission with changes clears approval
+    so the article can be reviewed again. An unchanged submission keeps
+    the existing approval status.
+
+    :param request: The browser request.
+    :param pk: The article's primary key.
+    :return: The edit form or a redirect after a valid submission.
+    """
     article = get_object_or_404(Article, pk=pk)
 
     is_editor = request.user.has_perm("news.approve_article")
