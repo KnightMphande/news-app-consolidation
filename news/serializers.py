@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Represent users without exposing passwords or private account data."""
 
     class Meta:
-        """Declare model metadata or serializer/form field policy."""
+        """Expose the user ID, username and role as read-only fields."""
 
         model = User
         fields = ("id", "username", "role")
@@ -20,7 +20,7 @@ class PublisherSerializer(serializers.ModelSerializer):
     """Represent a publisher and its newsroom members."""
 
     class Meta:
-        """Declare model metadata or serializer/form field policy."""
+        """Expose publisher details and newsroom membership as read-only fields."""
 
         model = Publisher
         fields = (
@@ -47,7 +47,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        """Declare model metadata or serializer/form field policy."""
+        """Allow writes to title, content and publisher; keep other fields read-only."""
 
         model = Article
         fields = (
@@ -112,7 +112,7 @@ class NewsletterSerializer(serializers.ModelSerializer):
     articles = serializers.SerializerMethodField()
 
     class Meta:
-        """Declare model metadata or serializer/form field policy."""
+        """Expose newsletter metadata and its approved articles as read-only fields."""
 
         model = Newsletter
         fields = (
@@ -128,7 +128,14 @@ class NewsletterSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_articles(self, newsletter):
-        """Prevent a newsletter response from exposing article drafts."""
+        """Return nested article data for approved articles only.
+
+        Fetch each article's author and publisher in the same query so
+        serialising those names does not trigger extra queries per article.
+
+        :param newsletter: The newsletter whose articles are being serialised.
+        :return: A list of serialised article records.
+        """
         articles = newsletter.articles.filter(
             approved=True,
         ).select_related("author", "publisher")
