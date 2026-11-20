@@ -18,3 +18,4 @@ venv/
 # Keep generated HTML for this assessment; ignore only build caches.
 docs/_build/.doctrees/
 staticfiles/
+docs/_build/**/.doctrees/
