@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>news.forms &#8212; News App 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for news.forms</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Bound forms that restrict publisher membership and approved selections."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django</span><span class="w"> </span><span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserCreationForm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Article</span><span class="p">,</span> <span class="n">Newsletter</span><span class="p">,</span> <span class="n">Publisher</span><span class="p">,</span> <span class="n">User</span>
+
+
+<div class="viewcode-block" id="ArticleForm">
+<a class="viewcode-back" href="../../news.html#news.forms.ArticleForm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ArticleForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Collect article content while preserving authorship rules."""</span>
+
+<div class="viewcode-block" id="ArticleForm.Meta">
+<a class="viewcode-back" href="../../news.html#news.forms.ArticleForm.Meta">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Declare the article fields exposed by the drafting form."""</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Article</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">,</span> <span class="s2">"publisher"</span><span class="p">)</span>
+        <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"title"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span>
+                <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"placeholder"</span><span class="p">:</span> <span class="s2">"Enter your headline"</span><span class="p">},</span>
+            <span class="p">),</span>
+            <span class="s2">"content"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">Textarea</span><span class="p">(</span>
+                <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"rows"</span><span class="p">:</span> <span class="mi">12</span><span class="p">},</span>
+            <span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Initialise fields and restrict choices for the current account."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># New articles belong to the signed-in journalist.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">user</span>
+
+        <span class="c1"># Only offer publishers that the article's author belongs to.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"publisher"</span><span class="p">]</span><span class="o">.</span><span class="n">queryset</span> <span class="o">=</span> <span class="n">Publisher</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">journalists__pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">author_id</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"publisher"</span><span class="p">]</span><span class="o">.</span><span class="n">empty_label</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Independent article — no publisher"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"publisher"</span><span class="p">]</span><span class="o">.</span><span class="n">help_text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Choose a publisher the author belongs to, "</span>
+            <span class="s2">"or leave this article independent."</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="NewsletterForm">
+<a class="viewcode-back" href="../../news.html#news.forms.NewsletterForm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NewsletterForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Let journalists and editors curate a newsletter from approved articles."""</span>
+
+<div class="viewcode-block" id="NewsletterForm.Meta">
+<a class="viewcode-back" href="../../news.html#news.forms.NewsletterForm.Meta">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Declare the fields exposed when curating a newsletter."""</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Newsletter</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="s2">"publisher"</span><span class="p">,</span> <span class="s2">"articles"</span><span class="p">)</span>
+        <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"description"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">Textarea</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"rows"</span><span class="p">:</span> <span class="mi">4</span><span class="p">}),</span>
+            <span class="s2">"articles"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxSelectMultiple</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Initialise fields and restrict choices for the current account."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">user</span>
+
+        <span class="c1"># A newsletter must contain at least one approved article.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"articles"</span><span class="p">]</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"articles"</span><span class="p">]</span><span class="o">.</span><span class="n">queryset</span> <span class="o">=</span> <span class="n">Article</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">approved</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">"author"</span><span class="p">,</span> <span class="s2">"publisher"</span><span class="p">)</span>
+
+        <span class="c1"># Only offer publishers that the newsletter's author belongs to.</span>
+        <span class="n">membership</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"editors__pk"</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="n">User</span><span class="o">.</span><span class="n">Role</span><span class="o">.</span><span class="n">EDITOR</span>
+            <span class="k">else</span> <span class="s2">"journalists__pk"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"publisher"</span><span class="p">]</span><span class="o">.</span><span class="n">queryset</span> <span class="o">=</span> <span class="n">Publisher</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">membership</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">author_id</span><span class="p">}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"publisher"</span><span class="p">]</span><span class="o">.</span><span class="n">empty_label</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Independent newsletter — no publisher"</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SubscriptionForm">
+<a class="viewcode-back" href="../../news.html#news.forms.SubscriptionForm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubscriptionForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Let readers manage their publisher and journalist subscriptions."""</span>
+
+<div class="viewcode-block" id="SubscriptionForm.Meta">
+<a class="viewcode-back" href="../../news.html#news.forms.SubscriptionForm.Meta">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Expose the publisher and journalist subscriptions a reader can edit."""</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">User</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"subscribed_publishers"</span><span class="p">,</span>
+            <span class="s2">"subscribed_journalists"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"subscribed_publishers"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxSelectMultiple</span><span class="p">(),</span>
+            <span class="s2">"subscribed_journalists"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxSelectMultiple</span><span class="p">(),</span>
+        <span class="p">}</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"subscribed_publishers"</span><span class="p">:</span> <span class="s2">"Publishers"</span><span class="p">,</span>
+            <span class="s2">"subscribed_journalists"</span><span class="p">:</span> <span class="s2">"Journalists"</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Initialise fields and restrict choices for the current account."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"subscribed_publishers"</span><span class="p">]</span><span class="o">.</span><span class="n">queryset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Publisher</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Readers may follow active journalists, not readers or editors.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"subscribed_journalists"</span><span class="p">]</span><span class="o">.</span><span class="n">queryset</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">Role</span><span class="o">.</span><span class="n">JOURNALIST</span><span class="p">,</span>
+            <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"username"</span><span class="p">)</span>
+
+        <span class="c1"># Leaving both selections empty means unsubscribing from everyone.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"subscribed_publishers"</span><span class="p">]</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"subscribed_journalists"</span><span class="p">]</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="RegistrationForm">
+<a class="viewcode-back" href="../../news.html#news.forms.RegistrationForm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RegistrationForm</span><span class="p">(</span><span class="n">UserCreationForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Create a news account with validated passwords and a selected role.</span>
+
+<span class="sd">    Only the listed public fields are writable. Staff status, superuser status</span>
+<span class="sd">    and arbitrary permission assignments are never accepted from sign-up.</span>
+<span class="sd">    """</span>
+
+    <span class="n">email</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RegistrationForm.Meta">
+<a class="viewcode-back" href="../../news.html#news.forms.RegistrationForm.Meta">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UserCreationForm</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Use the project's custom user and its three supported roles."""</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">User</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"username"</span><span class="p">,</span> <span class="s2">"email"</span><span class="p">,</span> <span class="s2">"role"</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PublisherForm">
+<a class="viewcode-back" href="../../news.html#news.forms.PublisherForm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PublisherForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Let a publication's editors manage details and active newsroom members.</span>
+
+<span class="sd">    An editor who creates a publisher is automatically retained as a member.</span>
+<span class="sd">    This prevents accidental removal of their own management access.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="PublisherForm.Meta">
+<a class="viewcode-back" href="../../news.html#news.forms.PublisherForm.Meta">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Expose publication details and affiliations, without account roles."""</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Publisher</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="s2">"editors"</span><span class="p">,</span> <span class="s2">"journalists"</span><span class="p">)</span>
+        <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"description"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">Textarea</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"rows"</span><span class="p">:</span> <span class="mi">4</span><span class="p">}),</span>
+            <span class="s2">"editors"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxSelectMultiple</span><span class="p">(),</span>
+            <span class="s2">"journalists"</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxSelectMultiple</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Restrict membership choices to active users with matching roles."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">user</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"editors"</span><span class="p">]</span><span class="o">.</span><span class="n">queryset</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">Role</span><span class="o">.</span><span class="n">EDITOR</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"username"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"journalists"</span><span class="p">]</span><span class="o">.</span><span class="n">queryset</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">Role</span><span class="o">.</span><span class="n">JOURNALIST</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"username"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"editors"</span><span class="p">]</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"editors"</span><span class="p">]</span><span class="o">.</span><span class="n">help_text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Selected editors can manage this publication. You remain an editor."</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="PublisherForm.save">
+<a class="viewcode-back" href="../../news.html#news.forms.PublisherForm.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Persist the publication and retain the acting editor's membership."""</span>
+        <span class="n">publisher</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">commit</span><span class="p">:</span>
+            <span class="n">publisher</span><span class="o">.</span><span class="n">editors</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">publisher</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">News App</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Code reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">news</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Knight Mphande.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

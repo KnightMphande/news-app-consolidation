@@ -14,3 +14,7 @@ htmlcov/
 !.env.example
 venv/
 *.zip
+
+# Keep generated HTML for this assessment; ignore only build caches.
+docs/_build/.doctrees/
+staticfiles/
