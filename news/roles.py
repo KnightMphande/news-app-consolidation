@@ -18,7 +18,13 @@ ROLE_ACTIONS = {
 
 
 def configure_role_groups():
-    """Create the role groups and assign their required permissions."""
+    """Create the news role groups and replace their permission sets.
+
+    Assign permissions for articles and newsletters according to each role.
+    Editors also receive permission to approve articles and add newsletters.
+    Rerun this after migrations to bring the groups back in line with the
+    permissions defined here.
+    """
     for role, group_name in ROLE_GROUPS.items():
         group, _ = Group.objects.get_or_create(name=group_name)
 
@@ -42,7 +48,14 @@ def configure_role_groups():
 
 
 def sync_user_role(user):
-    """Keep a user's role group consistent with their selected role."""
+    """Match a saved user's news group membership to their current role.
+
+    Preserve unrelated groups and clear publisher and journalist subscriptions
+    for non-readers. Clear cached permissions on this user instance so the
+    next permission check uses the updated membership.
+
+    :param user: A saved user with a role defined in ``ROLE_GROUPS``.
+    """
     group_name = ROLE_GROUPS[user.role]
     role_group, _ = Group.objects.get_or_create(name=group_name)
 

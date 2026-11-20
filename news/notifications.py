@@ -18,10 +18,14 @@ APPROVAL_SIGNING_SALT = "news.article-approval"
 
 
 def notify_article_approval(article):
-    """Email subscribers and notify the internal API after approval.
+    """Notify subscribers and the internal API when an article is approved.
 
-    Return any delivery warnings so the editor can see partial failures.
-    The article remains approved if a notification service fails.
+    Email each unique active reader address subscribed to the author or
+    publisher, then send a signed approval event to the internal API.
+
+    :param article: The approved article to announce.
+    :return: A list of delivery warnings, empty if no failures were detected.
+        A delivery failure does not undo the article's approval.
     """
     warnings = []
 

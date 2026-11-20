@@ -7,8 +7,12 @@ from news.roles import configure_role_groups, sync_user_role
 
 
 class Command(BaseCommand):
-    """Make role setup repeatable after migrations and fixture imports."""
+    """Refresh role permissions and reconcile all existing users.
 
+    Configure the groups first so each user is assigned to a group
+    with the current permissions. Iterate over accounts without
+    loading them all into memory, then report success.
+    """
     help = "Configure news role groups and synchronise existing users."
 
     def handle(self, *args, **options):

@@ -10,7 +10,7 @@ class ArticleForm(forms.ModelForm):
     """Collect article content while preserving authorship rules."""
 
     class Meta:
-        """Declare model metadata or serializer/form field policy."""
+        """Declare the article fields exposed by the drafting form."""
 
         model = Article
         fields = ("title", "content", "publisher")
@@ -49,7 +49,7 @@ class NewsletterForm(forms.ModelForm):
     """Let journalists and editors curate a newsletter from approved articles."""
 
     class Meta:
-        """Declare model metadata or serializer/form field policy."""
+        """Declare the fields exposed when curating a newsletter."""
 
         model = Newsletter
         fields = ("title", "description", "publisher", "articles")
@@ -90,7 +90,7 @@ class SubscriptionForm(forms.ModelForm):
     """Let readers manage their publisher and journalist subscriptions."""
 
     class Meta:
-        """Declare model metadata or serializer/form field policy."""
+        """Expose the publisher and journalist subscriptions a reader can edit."""
 
         model = User
         fields = (
