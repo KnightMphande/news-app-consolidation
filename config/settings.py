@@ -93,11 +93,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "news_app",
-        "USER": "news_app_user",
+        "NAME": os.environ.get("NEWS_DB_NAME", "news_app"),
+        "USER": os.environ.get("NEWS_DB_USER", "news_app_user"),
         "PASSWORD": os.environ["NEWS_DB_PASSWORD"],
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
+        "HOST": os.environ.get("NEWS_DB_HOST", "127.0.0.1"),
+        "PORT": os.environ.get("NEWS_DB_PORT", "3306"),
         "OPTIONS": {
             "charset": "utf8mb4",
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
