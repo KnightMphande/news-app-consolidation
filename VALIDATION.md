@@ -1,10 +1,9 @@
-Validation results
+# Validation results
 
-- Python syntax: PASS
-- Django system check: PASS
-- 89 tests on isolated SQLite: PASS
-- Validation Django: 6.1.3; supplied 6.1.1 pin retained
-- Strict Sphinx HTML rebuild: PASS
-- Docker build/runtime: NOT verified; engine unavailable
-- MariaDB runtime: NOT verified here
-- GitHub publication and remote Docker check: pending
+- All 89 automated tests passed on local MariaDB.
+- All 89 tests passed on isolated SQLite during package preparation.
+- Django system checks passed.
+- Strict Sphinx HTML build passed.
+- Docker image built successfully in GitHub Codespaces.
+- MariaDB container was healthy; migrations and role setup completed.
+- Website registration and browser testing worked through forwarded port 8000.
